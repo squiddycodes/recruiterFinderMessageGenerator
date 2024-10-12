@@ -82,14 +82,27 @@ const fs = require('fs');
         const jobs = await page.$$('.list-style-none > .reusable-search__result-container');
         for(const job of jobs){
             let name = "undefined";
+            let location = "undefined";
+            let status = "undefined";
+            let recruiterLinkedin = "undefined";
             try{
-                let element = await job.$(".entity-result__title-text > .app-aware-link");
-                name = await job.evaluate(el => el.textContent.trim(), element);
-                name = name.trim().replaceAll("\n", "");
-                name = name.trim().replaceAll("\t", "");
-                name = name.trim().replaceAll("  ", "");
+                let element = await job.$(".entity-result__title-text > .app-aware-link > span > span");
+                let recruiterData = await job.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);//remove most whitespace
+                recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
+                if(recruiterData.length > 2){//if not a linkedin hidden member
+                    name = recruiterData[1].split("View").pop();
+                    name = name.replace("’s profile", "");
+                    location = recruiterData[5];
+                    status = recruiterData[6];
+                }
             }catch(error){}
-            console.log(name + "\n\n");
+            try{
+                if(status.includes("Current")){//if they are CURRENTLY a recruiter
+                    
+                    //visit their page, grab tagline, about, url, education
+                }
+            }catch(error){}
+            console.log("Name: " + name + "\tLocation: " + location + "\tStatus: " + status + "\n");
         }
     }
 
