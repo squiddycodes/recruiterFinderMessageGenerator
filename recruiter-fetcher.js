@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 (async () => {
-    let recruiters = [];
+    let recruiterList = [];
     const jobTitles = [
         "Software Development",
         "Mobile App Development",
@@ -82,6 +82,7 @@ const fs = require('fs');
         
         const recruiters = await page.$$('.list-style-none > .reusable-search__result-container');
         for(const recruiter of recruiters){
+            let doNotAdd = false;
             let name = "undefined";
             let location = "undefined";
             let status = "undefined";
@@ -98,10 +99,14 @@ const fs = require('fs');
                 if(recruiterData.length > 2){//if not a linkedin hidden member
                     name = recruiterData[1].split("View").pop();
                     name = name.replace("’s profile", "");
+                    name = name.replace(" ", "");
                     location = recruiterData[5];
                     status = recruiterData[6];
                     recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
-                }
+                    if(!recruiterLinkedin.includes("/in/"))
+                        doNotAdd = true;
+                }else
+                    doNotAdd = true;
             }catch(error){}
             try{
                 if(status.includes("Current")){//if they are CURRENTLY a recruiter
@@ -115,7 +120,8 @@ const fs = require('fs');
                     recruiterTagline = recruiterData[4];
                     recruiterStatus = recruiterData[6];
                     await profilePage.waitForSelector('.UdDPsqOvTPDMZSLBZaNGGxyBXqSNkBQClL', { visible: true, timeout: 3000 });
-                }
+                }else
+                    doNotAdd = true;
             }catch(error){}
 
             //START EXPERIENCE & ABOUT
@@ -136,12 +142,17 @@ const fs = require('fs');
                 recruiterEducation = await profilePage.$eval('div > div > main > section:nth-child(6) > div.odrLHmBmKxJsahsMEDxzTVuSNTHKhMndqJow > ul > li:nth-child(1) > div > div.display-flex.flex-column.align-self-center.full-width > div > a > div > div > div > div > span:nth-child(1)', el => el.textContent.trim());
             }catch(error){}
             //END EDUCATION
-            console.log("before push " + name);
-            recruiters.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, recruiterTagline, status, searchQuery));
-            console.log("after push " + name);
+
+            //ADD RECRUITER
+            if(!doNotAdd){
+                recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, 
+                recruiterTagline, status, searchQuery));
+                totalRecruiters++;
+                console.log("Recruiters: " + totalRecruiters);
+            }
         }
         console.log("Done with ");
-        const jsonString = JSON.stringify(recruiters, null, 2);
+        const jsonString = JSON.stringify(recruiterList, null, 2);
         fs.writeFile('recruiters.json', jsonString, (err) => {
         if (err) {
             console.error('Error writing file:', err);
@@ -155,7 +166,8 @@ const fs = require('fs');
 
 })();
 
-function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterExperience, recruiterTagline, recruiterStatus, searchQuery){
+function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterExperience, 
+    recruiterTagline, recruiterStatus, searchQuery){
    return {
     recruiter_name: recruiterName || '',
     recruiter_location: recruiterLocation || '',
