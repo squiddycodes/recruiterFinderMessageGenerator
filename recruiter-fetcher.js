@@ -98,27 +98,20 @@ const fs = require('fs');
                     name = name.replace("’s profile", "");
                     location = recruiterData[5];
                     status = recruiterData[6];
+                    recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
                 }
             }catch(error){}
             try{
                 if(status.includes("Current")){//if they are CURRENTLY a recruiter
-                    const clickable = await recruiter.$('.display-flex');
-                    if (clickable) {
-                        console.log("clicking");
-                        await new Promise(r => setTimeout(r, 2000));//extra time for page to load
-                        await clickable.click();
-                    }
-                    try{
-                        await page.waitForSelector('.text-body-medium', { timeout: 15000 });
-                        let element = await recruiter.$(".text-body-medium");
-                        let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
-                        recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
-                        recruiterTagline = recruiterData[4];
-                        recruiterStatus = recruiterData[6];
-
-                    }catch(error){}
+                    await profilePage.goto(recruiterLinkedin);
+                    await profilePage.waitForSelector('.text-body-medium', { timeout: 15000 });
+                    let element = await recruiter.$(".text-body-medium");
+                    let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
+                    recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
+                    recruiterTagline = recruiterData[4];
+                    recruiterStatus = recruiterData[6]; 
                     
-                    await page.goBack();//go back when done
+                    //await page.goBack();//go back when done
                     //visit their page, grab tagline, about, url, education, update status with current first listed experience
                 }
             }catch(error){}
