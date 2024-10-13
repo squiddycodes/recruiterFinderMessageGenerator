@@ -22,6 +22,6 @@ def get_synonyms(word):
     df['similarity_score'] = scores
 
     top_matches = df.sort_values(by='similarity_score', ascending=False).head(20)
-    result = top_matches[['recruiter_name', 'recruiter_location', 'recruiter_education', 'recruiter_tagline', 'recruiter_linkedin', 'recruiter_currentjob']
+    result = top_matches[['recruiter_name', 'recruiter_location', 'recruiter_education', 'recruiter_tagline', 'recruiter_linkedin', 'recruiter_currentjob']]
 
     result.to_json('keyword.json', orient='records', lines=True)
