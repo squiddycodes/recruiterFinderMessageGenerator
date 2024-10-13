@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Grid } from '@mui/material'; // Assuming you are using Material-UI
 import './App.css';
 import RecruiterCard from './card';
-import jsonData from './example.json';
+import jsonData from 'recruiter-message-output.json';
 
 
 const App = () => {
