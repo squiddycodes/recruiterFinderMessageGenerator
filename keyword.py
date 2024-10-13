@@ -18,16 +18,14 @@ df['profile_text'] = df[['recruiter_name', 'recruiter_about', 'recruiter_tagline
 # List of profile texts for comparison
 profiles = df['profile_text'].tolist()
 
-# Define the function to get synonyms or similar profiles
 def get_synonyms(word):
-    # First, try to find exact matches in the 'profile_text'
+    #Find exact matches in the 'profile_text'
     matches = df[df['profile_text'].str.contains(word, case=False, na=False)]
     
     if not matches.empty:
         # If matches are found, return selected recruiter details
         return matches[['recruiter_name', 'recruiter_location', 'recruiter_education', 'recruiter_tagline', 'recruiter_linkedin', 'recruiter_currentjob']]
 
-    # If no exact matches, use the CrossEncoder model to find similar profiles
     print(f"No exact match found for '{word}'. Searching for similar terms...")
 
     # Load the cross-encoder model for similarity scoring
@@ -42,10 +40,10 @@ def get_synonyms(word):
     # Add similarity scores to the dataframe
     df['similarity_score'] = scores
 
-    # Sort by similarity score and take top 20 matches
+    # Sort by similarity score and take top 15 matches
     top_matches = df.sort_values(by='similarity_score', ascending=False).head(15)
     
-    # Return the result and save it to a JSON file
+    # Save it to a JSON file and return the result
     result = top_matches[['recruiter_name', 'recruiter_location', 'recruiter_education', 'recruiter_tagline', 'recruiter_linkedin', 'recruiter_currentjob']]
     result.to_json('keyword.json', orient='records', lines=True)
     return result
