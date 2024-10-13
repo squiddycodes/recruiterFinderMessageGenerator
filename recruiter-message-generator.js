@@ -17,10 +17,21 @@ require("dotenv").config();
     let outputJSONS = [];
 
     for(let i = 0; i < recruiters.length; i++){//iterate through recruiters, generate "One shot" output messages
-        let prompt = "Consider a job recruiter with information:" + recruiters[i] + "\nAnd a job searcher with resume:" + resume + "\nCreate a concise LinkedIn DM greeting for the job searcher; preferably including a specific connection from the resume to the recruiter's personal info. Do not include a subject line; The recruiter's name is " + recruiters[i].recruiter_name;
+        let fullName = recruiters[i].recruiter_name.split(" ");
+        
+        //MR OR MS PROMPT
+        let pronoun = await newPrompt(openAIClient, "Is the first name \"" + fullName[0] + "\" more masculine or feminine? Your output should be one word: \"Mr.\" or \"Ms.\"");
+        //END MR OR MS PROMPT
+
+        let recruiterMainIdeas = await newPrompt(openAIClient, "Consider a recruiter with LinkedIn about section: " + recruiters[i].recruiter_about + "\n\n -- linkedin status: " + recruiters[i].recruiter_status + "\n\n -- and linkedin tagline: " + recruiters[i].recruiter_tagline + ".\n\nIn one sentence, answer:Where do they work? What skills are they recruiting for? If none are listed, WHAT SKILLS DOES THEIR COMPANY VALUE?");
+        //console.log(recruiterMainIdeas + "\n\n");
+        let prompt = "Consider a job recruiter, " + recruiterMainIdeas + "\nYou are a job seeker, with resume:" + resume + "\n\n-----Create a concise LinkedIn DM greeting, you want to make an impression on this recruiter. Find something in your resume to emphasize, that the recruiter will like; preferably a skill they could be looking for or an experience you have that sets you apart. Start with \"Dear " + pronoun + " " + fullName[1] + "\"; end with \"Sincerely\" or a similar closing";
+        //let longPrompt = "Use the following information:Your Resume (given: containing your skills, experiences, education, etc.) -- Recruiter's Information (recruiter name, location, LinkedIn profile, about section, education, tagline, and company details) - Use the recruiter information to infer about what qualifications/skills they're looking for and what positions they're hiring for\n Write a concise LinkedIn greeting message that:Starts with a friendly greeting and the recruiter's name. Expresses your interest in their company and something SPECIFIC UNIQUE from the given recruiter information that compliments something from your resume. Ends with a polite call to action (e.g., requesting to connect or discuss further) and a friendly sign-off. Ensure the message is conversational but direct, highlighting the strongest connection between you and the recruiter in a concise way. Address the recruiter as \"" + pronoun + " " + fullName[1] + "\". RESUME: " + resume + "RECRUITER DATA: " + recruiters[i];
         outputJSONS.push(convertToFinishedRecruiterObject(recruiters[i].recruiter_name, recruiters[i].recruiterLocation, recruiters[i].recruiter_linkedin, 
         recruiters[i].recruiter_about, recruiters[i].recruiter_education, recruiters[i].recruiter_experience, recruiters[i].recruiter_tagline, 
-        recruiters[i].recruiter_status, recruiters[i].search_query, await newPrompt(openAIClient, prompt)));
+        //recruiters[i].recruiter_status, recruiters[i].search_query, await newPrompt(openAIClient, shortPrompt)));//SHORT PROMPT
+        recruiters[i].recruiter_status, recruiters[i].search_query, (await newPrompt(openAIClient, prompt))));//LONG PROMPT
+        console.log((i+1) + "/" + recruiters.length);//show progress
     }
     const jsonString = JSON.stringify(outputJSONS, null, 2);
     fs.writeFile('recruiter-message-output.json', jsonString, (err) => {
@@ -35,7 +46,7 @@ require("dotenv").config();
 
 async function newPrompt(client, input){
     const output = await client.chat.completions.create({
-        model:"gpt-3.5-turbo",
+        model:"gpt-4",
         messages: [
           {
             role:"user",
