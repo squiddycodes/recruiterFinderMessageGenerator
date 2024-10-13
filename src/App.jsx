@@ -3,7 +3,6 @@ import { Grid } from '@mui/material'; // Assuming you are using Material-UI
 import './App.css';
 import RecruiterCard from './card';
 import jsonData from './example.json';
-import AspectRatio from '@mui/joy/AspectRatio';
 
 
 const App = () => {

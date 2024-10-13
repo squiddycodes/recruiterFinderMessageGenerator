@@ -40,12 +40,24 @@ const RecruiterCard = ({ name, location, linkedin, about, education, currentJob,
         </Chip>
         <Typography level="title-lg">{name}</Typography>
         <Typography level="body-sm" sx={{ maxWidth: '24ch' }}>
-        <p><strong> <LocationOnIcon />  Location:</strong> {location}</p>
-        <p><strong><InfoIcon /> About:</strong> {about}</p>
-        <p><strong> <SchoolIcon />Education:</strong> {education || 'N/A'}</p>
-        <p><strong> <WorkIcon /> Job:</strong> {currentJob}</p>
-        <p><strong> <LabelImportantIcon />Tagline:</strong> {tagline}</p>
-        <p><strong> <EventAvailableIcon /> Status:</strong> {status}</p>
+        {location && location !== "Undefined" && (
+            <p><strong> <LocationOnIcon />  Location:</strong> {location}</p>
+            )}
+        {about && about !== "Undefined" && (
+            <p><strong><InfoIcon /> About:</strong> {about}</p>
+          )}
+        {education && education !=="Undefined"&& (
+            <p><strong> <SchoolIcon />Education:</strong> {education || 'N/A'}</p>
+            )}
+        {currentJob && currentJob!=="Undefined"&&(
+            <p><strong> <WorkIcon /> Job:</strong> {currentJob}</p>
+            )}
+        {tagline && tagline!=="Undefined"&& (
+            <p><strong> <LabelImportantIcon />Tagline:</strong> {tagline}</p>
+            )}
+        {status && status!=="Undefined"&&(
+            <p><strong> <EventAvailableIcon /> Status:</strong> {status}</p>
+            )}
         </Typography>
         <Box
           sx={{
