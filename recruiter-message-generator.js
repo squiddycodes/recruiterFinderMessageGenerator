@@ -9,13 +9,28 @@ require("dotenv").config();
     });
     //END INIT OPENAI MODEL 
 
-    const data = fs.readFileSync('selected-recruiters.json', 'utf8');//load resume json
+    const data = fs.readFileSync('selected-recruiters.json', 'utf8');//load recruiter json
     const recruiters = JSON.parse(data);
 
-    let outputMessages = [];
-    let prompt = "Using the following information:Client's Resume (containing the client’s skills, experiences, education, and other relevant details) Job Description (which specifies the role’s requirements, key responsibilities, and qualifications) Recruiter's Information (recruiter name, location, LinkedIn profile, about section, education, tagline, and company details) Write a concise LinkedIn message that:Starts with a friendly greeting and the recruiter's name. Introduces the client, focusing only on the most relevant skills and experiences that match the job description. Makes a direct connection between the client’s experience and the key qualifications or requirements from the job description. References something specific about the recruiter or company that demonstrates genuine interest.Ends with a polite call to action (e.g., requesting to connect or discuss further) and a friendly sign-off.Ensure the message is conversational but direct, highlighting the strongest fit between the client and the job role in a concise way.";
-    console.log(recruiters[1].recruiter_location);
-    //console.log(await newPrompt(openAIClient, "Describe penn state in 5 words"));
+    const resume = fs.readFileSync('resume.txt', 'utf8');
+
+    let outputJSONS = [];
+
+    for(let i = 0; i < recruiters.length; i++){//iterate through recruiters, generate "One shot" output messages
+        let prompt = "Consider a job recruiter with information:" + recruiters[i] + "\nAnd a job searcher with resume:" + resume + "\nCreate a concise LinkedIn DM greeting for the job searcher; preferably including a specific connection from the resume to the recruiter's personal info. Do not include a subject line; The recruiter's name is " + recruiters[i].recruiter_name;
+        outputJSONS.push(convertToFinishedRecruiterObject(recruiters[i].recruiter_name, recruiters[i].recruiterLocation, recruiters[i].recruiter_linkedin, 
+        recruiters[i].recruiter_about, recruiters[i].recruiter_education, recruiters[i].recruiter_experience, recruiters[i].recruiter_tagline, 
+        recruiters[i].recruiter_status, recruiters[i].search_query, await newPrompt(openAIClient, prompt)));
+    }
+    const jsonString = JSON.stringify(outputJSONS, null, 2);
+    fs.writeFile('recruiter-message-output.json', jsonString, (err) => {
+        if (err) {
+            console.error('Error writing file:', err);
+        } else {
+            console.log('File successfully written!');
+        }
+    });
+
 })();
 
 async function newPrompt(client, input){
