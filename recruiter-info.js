@@ -1,7 +1,14 @@
 // import json file
 const fs = require('fs');
+const readline = require('readline');
 
-const data = require('C:/Users/septr/Downloads/example.json'); // HAVE TO EDIT, TO WORK WITH GITHUB.
+const data = require('C:/Users/septr/OneDrive/Desktop/projects/LinkedInRecruiter/recruiters.json'); //changes based off
+// Create an interface for reading input from the console
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
 // create function that checks if the phrase EXISTS IN:
 // checks phrase is in recruiter_tagline, recruiter_about, recruiter_status
 function getRecruiterInfo(phrase) {
@@ -57,7 +64,11 @@ function saveOutputToFile(phrase, fileName) {
         console.log("The result has been saved to", fileName);
     });
 }
-
-// Example usage
-saveOutputToFile("Software Engineering", "selected-recruiters.json"); // Output will be saved as 67
+//question 1 does phrase, question 2 does filename
+rl.question(`Enter the phrase to search: `, function(phrase) {
+    rl.question(`Enter the file name to save the result: `, function(fileName) { //QUESTION: should it always save it to a set file name?
+        saveOutputToFile(phrase, fileName);
+        rl.close();
+    })
+})
 //status, about, tagline    
