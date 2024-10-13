@@ -30,7 +30,7 @@ const RecruiterCard = ({ name, location, linkedin, about, education, currentJob,
         >
           PRO
         </Chip>
-        <Typography level="title-lg">{{name}}</Typography>
+        <Typography level="title-lg">{name}</Typography>
         <Typography level="body-sm" sx={{ maxWidth: '24ch' }}>
         <p><strong>Location:</strong> {location}</p>
         <p><strong>LinkedIn:</strong> <a href={`https://${linkedin}`} target="_blank" rel="noopener noreferrer">{linkedin}</a></p>

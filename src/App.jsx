@@ -16,9 +16,10 @@ const App = () => {
       <div>
         <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
           {data.map((recruiter, index) => (
-            < item >
+            < item key={index}>
               {console.log(recruiter)}
               <RecruiterCard
+                key={index}
                 name={recruiter.recruiter_name}
                 location={recruiter.recruiter_location}
                 linkedin={recruiter.recruiter_linkedin}
