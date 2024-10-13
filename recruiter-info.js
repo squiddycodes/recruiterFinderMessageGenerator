@@ -1,13 +1,9 @@
 // import json file
 const fs = require('fs');
-const readline = require('readline');
-
 const data = require('C:/Users/septr/OneDrive/Desktop/projects/LinkedInRecruiter/recruiters.json'); 
-// Create an interface for reading input from the console
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+
+// get the phrase from command line argument
+const phrase = process.argv[2];
 
 // create function that checks if the phrase EXISTS IN:
 // checks phrase is in recruiter_tagline, recruiter_about, recruiter_status
@@ -67,7 +63,8 @@ function saveOutputToFile(phrase) {
 }
 
 // ask the user for the input phrase, always save to a predefined file
-rl.question('Enter the phrase to search: ', function(phrase) {
+if (!phrase) {
+    console.log('Please provide a phrase as an argument.');
+} else {
     saveOutputToFile(phrase);
-    rl.close();
-});
+}
