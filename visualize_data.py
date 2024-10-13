@@ -10,6 +10,8 @@ df_grouped = df.groupby(['recruiter_education', 'recruiter_location']).size().re
 
 df_top10 = df_grouped.sort_values(by='count', ascending=False).head(7)
 
+df_top10['count'] = df_top10['count'].astype(int)
+
 # Plot the top 10 most common combinations of recruiter education and location
 plt.figure(figsize=(12, 8))
 sns.barplot(x='count', y='recruiter_education', hue='recruiter_location', data=df_top10)
