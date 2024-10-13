@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 (async () => {
+    let recruiters = [];
     const jobTitles = [
         "Software Development",
         "Mobile App Development",
@@ -106,24 +107,48 @@ const fs = require('fs');
                 if(status.includes("Current")){//if they are CURRENTLY a recruiter
                     await profilePage.goto(recruiterLinkedin);
                     await profilePage.waitForSelector('.text-body-medium', { timeout: 15000 });
+                    //visit their page, grab education, update status with current first listed experience
+                    //TAGLINE & STATUS
                     let element = await recruiter.$(".text-body-medium");
                     let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
                     recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
                     recruiterTagline = recruiterData[4];
                     recruiterStatus = recruiterData[6];
-                    await profilePage.waitForSelector('.pv3', { visible: true, timeout: 3000 });
-                    
-                    let element2 = await profilePage.$(".pv3");
-                    recruiterAbout = await profilePage.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element2);//remove most whitespace
-                    recruiterAbout = recruiterAbout.replaceAll("  ", "");
-                    if(recruiterAbout.length < 20)
-                        recruiterAbout = "undefined";
-                    //visit their page, grab tagline, about, url, education, update status with current first listed experience
+                    await profilePage.waitForSelector('.UdDPsqOvTPDMZSLBZaNGGxyBXqSNkBQClL', { visible: true, timeout: 3000 });
                 }
             }catch(error){}
-            console.log(name + " about:" + recruiterAbout + "\n");
-            //console.log("Name: " + name + "\tLocation: " + location + "\tStatus: " + status + "\n");
+
+            //START EXPERIENCE & ABOUT
+            //GETS ALL AS ARRAY
+            const profileSectionText = await profilePage.$$eval('.eMKzYTnovCkOQaNEgZiBMAzoRyZWLkSNRU', elements =>
+                elements.map(element => element.textContent.trim())
+            );
+            try{
+                await profilePage.waitForSelector('#about', { timeout: 100 });
+                recruiterAbout = profileSectionText[0];
+                recruiterExperience = profileSectionText[1];
+            }catch(error){recruiterExperience = profileSectionText[0]}
+            //END EXPERIENCE & ABOUT
+                    
+            //START EDUCATION
+            try{
+                await profilePage.waitForSelector('#education', { timeout: 100 });
+                recruiterEducation = await profilePage.$eval('div > div > main > section:nth-child(6) > div.odrLHmBmKxJsahsMEDxzTVuSNTHKhMndqJow > ul > li:nth-child(1) > div > div.display-flex.flex-column.align-self-center.full-width > div > a > div > div > div > div > span:nth-child(1)', el => el.textContent.trim());
+            }catch(error){}
+            //END EDUCATION
+            console.log("before push " + name);
+            recruiters.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, recruiterTagline, status, searchQuery));
+            console.log("after push " + name);
         }
+        console.log("Done with ");
+        const jsonString = JSON.stringify(recruiters, null, 2);
+        fs.writeFile('recruiters.json', jsonString, (err) => {
+        if (err) {
+            console.error('Error writing file:', err);
+        } else {
+            console.log('File successfully written!');
+        }
+        });
     }
 
     console.log("done");
