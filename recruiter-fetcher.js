@@ -87,6 +87,7 @@ const fs = require('fs');
             let recruiterLinkedin = "undefined";
             let recruiterAbout = "undefined";
             let recruiterEducation = "undefined";
+            let recruiterExperience = "undefined";
             let recruiterTagline = "undefined";
             let searchQuery = title;
             try{
@@ -109,12 +110,18 @@ const fs = require('fs');
                     let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
                     recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
                     recruiterTagline = recruiterData[4];
-                    recruiterStatus = recruiterData[6]; 
+                    recruiterStatus = recruiterData[6];
+                    await profilePage.waitForSelector('.pv3', { visible: true, timeout: 3000 });
                     
-                    //await page.goBack();//go back when done
+                    let element2 = await profilePage.$(".pv3");
+                    recruiterAbout = await profilePage.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element2);//remove most whitespace
+                    recruiterAbout = recruiterAbout.replaceAll("  ", "");
+                    if(recruiterAbout.length < 20)
+                        recruiterAbout = "undefined";
                     //visit their page, grab tagline, about, url, education, update status with current first listed experience
                 }
             }catch(error){}
+            console.log(name + " about:" + recruiterAbout + "\n");
             //console.log("Name: " + name + "\tLocation: " + location + "\tStatus: " + status + "\n");
         }
     }
@@ -123,13 +130,14 @@ const fs = require('fs');
 
 })();
 
-function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterTagline, recruiterStatus, searchQuery){
+function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterExperience, recruiterTagline, recruiterStatus, searchQuery){
    return {
     recruiter_name: recruiterName || '',
     recruiter_location: recruiterLocation || '',
     recruiter_linkedin: recruiterLinkedIn || '',
     recruiter_about: recruiterAbout || '',
     recruiter_education: recruiterEducation || '',
+    recruiter_experience: recruiterExperience || '',
     recruiter_tagline: recruiterTagline || '',
     recruiter_status: recruiterStatus || '',
     search_query: searchQuery || ''
