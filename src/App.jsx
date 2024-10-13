@@ -12,9 +12,8 @@ const App = () => {
   }, []);
 
   return (
-    <>
-      <div>
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+
+        <Grid container spacing={{ xs: 8, md: 10 , lg:12 }} columns={{ xs: 4, sm: 8, md: 12 }}>
           {data.map((recruiter, index) => (
             < item key={index}>
               {console.log(recruiter)}
@@ -32,8 +31,7 @@ const App = () => {
             </item>
           ))}
         </Grid>
-      </div>
-    </>
+
   );
 }
 
