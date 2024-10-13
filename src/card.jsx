@@ -8,9 +8,18 @@ import Card from '@mui/joy/Card';
 import CardContent from '@mui/joy/CardContent';
 import CardOverflow from '@mui/joy/CardOverflow';
 import CardActions from '@mui/joy/CardActions';
-import IconButton from '@mui/joy/IconButton';
 import Typography from '@mui/joy/Typography';
 import SvgIcon from '@mui/joy/SvgIcon';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import InfoIcon from '@mui/icons-material/Info';
+import SchoolIcon from '@mui/icons-material/School';
+import WorkIcon from '@mui/icons-material/Work';
+import LabelImportantIcon from '@mui/icons-material/LabelImportant';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+
+
+
+
 
 const RecruiterCard = ({ name, location, linkedin, about, education, currentJob, tagline, status }) => {
     return (
@@ -31,28 +40,12 @@ const RecruiterCard = ({ name, location, linkedin, about, education, currentJob,
         </Chip>
         <Typography level="title-lg">{name}</Typography>
         <Typography level="body-sm" sx={{ maxWidth: '24ch' }}>
-        <p><strong>
-        <IconButton size="sm" variant="plain" color="neutral">
-            <SvgIcon>
-              <svg
-                xmlns="src\assets\download.png"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5Z"
-                />
-              </svg>
-            </SvgIcon>
-          </IconButton>
-            Location:</strong> {location}</p>
-        <p><strong>About:</strong> {about}</p>
-        <p><strong>Education:</strong> {education || 'N/A'}</p>
-        <p><strong>Current Job:</strong> {currentJob}</p>
-        <p><strong>Tagline:</strong> {tagline}</p>
-        <p><strong>Status:</strong> {status}</p>
+        <p><strong> <LocationOnIcon />  Location:</strong> {location}</p>
+        <p><strong><InfoIcon /> About:</strong> {about}</p>
+        <p><strong> <SchoolIcon />Education:</strong> {education || 'N/A'}</p>
+        <p><strong> <WorkIcon /> Job:</strong> {currentJob}</p>
+        <p><strong> <LabelImportantIcon />Tagline:</strong> {tagline}</p>
+        <p><strong> <EventAvailableIcon /> Status:</strong> {status}</p>
         </Typography>
         <Box
           sx={{

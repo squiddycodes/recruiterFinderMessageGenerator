@@ -3,6 +3,8 @@ import { Grid } from '@mui/material'; // Assuming you are using Material-UI
 import './App.css';
 import RecruiterCard from './card';
 import jsonData from './example.json';
+import AspectRatio from '@mui/joy/AspectRatio';
+
 
 const App = () => {
   const [data, setData] = useState([]);
@@ -12,8 +14,8 @@ const App = () => {
   }, []);
 
   return (
-
-        <Grid container spacing={{ xs: 8, md: 10 , lg:12 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+    
+        <Grid container display="flex" justifyContent="space-between" alignItems="center" spacing={{ xs: 8, md: 10 , lg:12 }} columns={{ xs: 4, sm: 8, md: 12 }}>
           {data.map((recruiter, index) => (
             < item key={index}>
               {console.log(recruiter)}
