@@ -27,4 +27,4 @@ def get_synonyms(word):
     result = top_matches[['recruiter_name', 'recruiter_location', 'recruiter_education', 'recruiter_tagline', 'recruiter_linkedin', 'recruiter_currentjob']]
 
     # Save to JSON file
-    return result.to_json('test1.json', orient='records', lines=True)
+    return result.to_json('keyword.json', orient='records', lines=True)
