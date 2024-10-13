@@ -1,4 +1,4 @@
-
+/*
 
 prompt Perfect LinkedIn Message Prompt: Informal
 
@@ -39,3 +39,4 @@ Key Focus:
 No subject line, as it’s a LinkedIn message.
 Formal, respectful, and concise.
 Highlights the most relevant qualifications and achievements.
+*/
