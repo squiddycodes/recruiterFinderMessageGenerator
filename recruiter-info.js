@@ -2,7 +2,7 @@
 const fs = require('fs');
 const readline = require('readline');
 
-const data = require('C:/Users/septr/OneDrive/Desktop/projects/LinkedInRecruiter/recruiters.json'); //changes based off
+const data = require('C:/Users/septr/OneDrive/Desktop/projects/LinkedInRecruiter/recruiters.json'); 
 // Create an interface for reading input from the console
 const rl = readline.createInterface({
     input: process.stdin,
@@ -51,12 +51,13 @@ function getRecruiterInfo(phrase) {
         
     return result
     }
-// Save output to a JSON file
-function saveOutputToFile(phrase, fileName) {
+// now, this will save output to file
+function saveOutputToFile(phrase) {
     const result = getRecruiterInfo(phrase);
-    
-    // Write result to a JSON file
-    fs.writeFile(fileName, JSON.stringify(result, null, 2), 'utf8', (err) => {
+    const fileName = 'selected-recruiters.json';  //this is the name we will be using
+
+    // write it as json
+    fs.writeFile(fileName, JSON.stringify(result, null, 2), 'utf8', function(err) {
         if (err) {
             console.error("An error occurred while writing to the file:", err);
             return;
@@ -64,11 +65,9 @@ function saveOutputToFile(phrase, fileName) {
         console.log("The result has been saved to", fileName);
     });
 }
-//question 1 does phrase, question 2 does filename
-rl.question(`Enter the phrase to search: `, function(phrase) {
-    rl.question(`Enter the file name to save the result: `, function(fileName) { //QUESTION: should it always save it to a set file name?
-        saveOutputToFile(phrase, fileName);
-        rl.close();
-    })
-})
-//status, about, tagline    
+
+// ask the user for the input phrase, always save to a predefined file
+rl.question('Enter the phrase to search: ', function(phrase) {
+    saveOutputToFile(phrase);
+    rl.close();
+});
