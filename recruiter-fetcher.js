@@ -99,11 +99,12 @@ const fs = require('fs');
                 if(recruiterData.length > 2){//if not a linkedin hidden member
                     name = recruiterData[1].split("View").pop();
                     name = name.replace("’s profile", "");
+                    name = name.replace("’ profile", "");
                     name = name.replace(" ", "");
                     location = recruiterData[5];
                     status = recruiterData[6];
                     recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
-                    if(!recruiterLinkedin.includes("/in/"))
+                    if(!recruiterLinkedin.includes("/in/") || name.includes("LinkedInMember"))
                         doNotAdd = true;
                 }else
                     doNotAdd = true;
@@ -148,10 +149,11 @@ const fs = require('fs');
                 recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, 
                 recruiterTagline, status, searchQuery));
                 totalRecruiters++;
-                console.log("Recruiters: " + totalRecruiters);
+                console.log("Recruiters: " + recruiterList.length);
             }
         }
-        console.log("Done with ");
+        console.log("Done with " + title);
+        recruiterList = removeDuplicateRecruiters(recruiterList);
         const jsonString = JSON.stringify(recruiterList, null, 2);
         fs.writeFile('recruiters.json', jsonString, (err) => {
         if (err) {
@@ -179,4 +181,18 @@ function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLin
     recruiter_status: recruiterStatus || '',
     search_query: searchQuery || ''
    };
- }
+}
+
+function removeDuplicateRecruiters(recruiters) {
+    const uniqueNames = new Set();
+    const filteredRecruiters = [];
+
+    for (const recruiter of recruiters) {
+        if (!uniqueNames.has(recruiter.recruiter_name)) {
+            uniqueNames.add(recruiter.recruiter_name);
+            filteredRecruiters.push(recruiter);
+        }
+    }
+
+    return filteredRecruiters;
+}
