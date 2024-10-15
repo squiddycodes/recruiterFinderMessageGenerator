@@ -96,23 +96,21 @@ const fs = require('fs');
                 let element = await recruiter.$(".entity-result__title-text > .app-aware-link > span > span");
                 let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);//remove most whitespace
                 recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
-                if(recruiterData.length > 2){//if not a linkedin hidden member
-                    name = recruiterData[1].split("View").pop();
-                    name = name.replace("’s profile", "");
-                    name = name.replace("’ profile", "");
-                    name = name.replace(" ", "");
-                    location = recruiterData[5];
-                    status = recruiterData[6];
-                    recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
-                    if(!recruiterLinkedin.includes("/in/") || name.includes("LinkedInMember"))
-                        doNotAdd = true;
-                }else
+
+                name = recruiterData[1].split("View").pop();
+                name = name.replace("’s profile", "");
+                name = name.replace("’ profile", "");
+                name = name.replace(" ", "");
+                location = recruiterData[5];
+                status = recruiterData[6];
+                recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
+                if(!recruiterLinkedin.includes("/in/") || name.includes("LinkedInMember"))
                     doNotAdd = true;
             }catch(error){}
             try{
-                if(status.includes("Current")){//if they are CURRENTLY a recruiter
+                if(status.includes("Current") && (status.includes("Recruiter") || status.includes("recruiter") || status.includes("RECRUITER"))){//if they are CURRENTLY a recruiter
                     await profilePage.goto(recruiterLinkedin);
-                    await profilePage.waitForSelector('.text-body-medium', { timeout: 15000 });
+                    await profilePage.waitForSelector('.text-body-medium', { timeout: 10000 });
                     //visit their page, grab education, update status with current first listed experience
                     //TAGLINE & STATUS
                     let element = await recruiter.$(".text-body-medium");
@@ -125,7 +123,7 @@ const fs = require('fs');
                     doNotAdd = true;
             }catch(error){}
 
-            //START EXPERIENCE & ABOUT
+            //START ABOUT
             //GETS ALL AS ARRAY
             const profileSectionText = await profilePage.$$eval('.eMKzYTnovCkOQaNEgZiBMAzoRyZWLkSNRU', elements =>
                 elements.map(element => element.textContent.trim())
@@ -133,9 +131,8 @@ const fs = require('fs');
             try{
                 await profilePage.waitForSelector('#about', { timeout: 100 });
                 recruiterAbout = profileSectionText[0];
-                recruiterExperience = profileSectionText[1];
-            }catch(error){recruiterExperience = profileSectionText[0]}
-            //END EXPERIENCE & ABOUT
+            }catch(error){}
+            //END ABOUT
                     
             //START EDUCATION
             try{
@@ -144,6 +141,36 @@ const fs = require('fs');
             }catch(error){}
             //END EDUCATION
 
+            //FIRST JOB EXPERIENCE LISTED
+            try{
+                recruiterExperience = await profilePage.evaluate(() => {
+                const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
+                let experienceSection = null;
+                for(const section of sections){
+                    if(section.querySelector('div')?.id == "experience"){
+                        experienceSection = section;
+                    }
+                }
+                if(!experienceSection) return null;
+                    
+                let experiences = experienceSection.querySelectorAll('li');
+                if(experiences.length == 0) return null;
+
+                let title = experiences[0].querySelector('span')?.innerText;
+                let firstJobCompany = experiences[0].querySelector('.t-14')?.innerText;
+                let output = title + " at " + firstJobCompany;
+
+                if(firstJobCompany.includes("Full-time · ") || firstJobCompany.includes("yrs") || firstJobCompany.includes("mos")){//check subheading
+                    firstJobCompany = experiences[0].querySelectorAll(".t-bold")[1]?.innerText;
+                    output = firstJobCompany + " at " + title;
+                    output = output.split("\n").pop();
+                }else
+                    output = output.split("\n").shift();
+                return output || null;
+            });
+            //recruiterExperience = recruiterExperience.split("\n").shift();
+            //FIRST JOB EXPERIENCE LISTED END
+
             //ADD RECRUITER
             if(!doNotAdd){
                 recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, 
@@ -151,6 +178,7 @@ const fs = require('fs');
                 totalRecruiters++;
                 console.log("Recruiters: " + recruiterList.length);
             }
+            }catch(error){}
         }
         console.log("Done with " + title);
         recruiterList = removeDuplicateRecruiters(recruiterList);
