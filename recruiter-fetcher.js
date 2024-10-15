@@ -83,7 +83,7 @@ const fs = require('fs');
             await page.waitForSelector('.reusable-search__entity-result-list > .reusable-search__result-container', { timeout: 60000 });//wait for list to load - time to type in password
         }catch(error){}
         
-        let pagesScraped = 0;
+        let pagesScraped = 1;
         let goToNextPage = true;
         while(goToNextPage){
             goToNextPage = false;
@@ -185,6 +185,8 @@ const fs = require('fs');
                         if(!aboutSection) return null;
                         
                         let output = aboutSection.querySelector('.QPriypoPxOFvmnjsoqRxkXeeNBXMwoasTM');
+                        if(!output)
+                            return null;
                         
                         return output.innerText.trim() || null;
                         });
@@ -265,7 +267,7 @@ const fs = require('fs');
                     //EMAIL
                     try{
                         await profilePage.goto(recruiterLinkedin + "overlay/contact-info/");
-                        await profilePage.waitForSelector('.GbOUqgsXcLRctkckezmvfytZoHiNtpjNMicbM', { timeout: 10000 });//wait for page load
+                        await profilePage.waitForSelector('.pv-contact-info__header', { timeout: 10000 });//wait for page load
                         recruiterEmail = await profilePage.evaluate(() => {
                             let headings = document.querySelectorAll(".pv-contact-info__header");
                             let emailHeading = undefined;
@@ -291,7 +293,7 @@ const fs = require('fs');
                     numRecruitersAddedFromCurrPage++;
                 }
             }//END PAGE SCRAPE FOR RECRUITER IN RECRUITERS
-            console.log(numRecruitersAddedFromCurrPage + "/" + numRecruitersOnPage + " - pages iterated:" + pagesScraped);
+            console.log(numRecruitersAddedFromCurrPage + "/" + numRecruitersOnPage + " Recruiter/Non-Recruiter ratio - pages iterated:" + pagesScraped);
             if(numRecruitersAddedFromCurrPage / numRecruitersOnPage >= scrapeSuccessThreshold && pagesScraped < maxPagesPerJobTitle){//go to next page if condition satisfied
                 goToNextPage = true;
                 pagesScraped++;
@@ -302,7 +304,7 @@ const fs = require('fs');
             }
         }//END WHILE
         
-        console.log("Done with " + title);
+        console.log("Done with " + title + "\n");
         recruiterList = removeDuplicateRecruiters(recruiterList);
         const jsonString = JSON.stringify(recruiterList, null, 2);
         fs.writeFile('recruiters.json', jsonString, (err) => {
