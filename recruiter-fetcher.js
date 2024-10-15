@@ -77,7 +77,7 @@ const fs = require('fs');
         //await new Promise(r => setTimeout(r, 2000));//extra time for page to load
 
         try{
-            await page.waitForSelector('.reusable-search__entity-result-list > .reusable-search__result-container', { timeout: 15000 });
+            await page.waitForSelector('.reusable-search__entity-result-list > .reusable-search__result-container', { timeout: 60000 });//wait for list to load - time to type in password
         }catch(error){}
         
         const recruiters = await page.$$('.list-style-none > .reusable-search__result-container');
@@ -87,9 +87,11 @@ const fs = require('fs');
             let location = undefined;
             let status = undefined;
             let recruiterLinkedin = undefined;
+            let recruiterProfilePicture = undefined;
             let recruiterAbout = undefined;
             let recruiterEducation = undefined;
-            let recruiterExperience = undefined;
+            let recruiterCurrentJobTitle = undefined;
+            let recruiterCurrentJobCompany = undefined;
             let recruiterTagline = undefined;
             let searchQuery = title;
             //STATUS
@@ -137,6 +139,15 @@ const fs = require('fs');
                     });
                 }catch(error){console.log("Error in LOCATION fetch: " + error);}
                 //END LOCATION
+
+                //PROFILE PICTURE (PFP)
+                try{
+                    recruiterProfilePicture = await profilePage.evaluate(() => {
+                        return document.querySelector(".pv-top-card-profile-picture__image--show").getAttribute("src");
+                    });
+                    if(recruiterProfilePicture.includes("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"))//if no pfp
+                        recruiterProfilePicture = undefined;
+                }catch(error){console.log("Error in PROFILE PICTURE (PFP) fetch: " + error);}
 
                 //TAGLINE
                 let element = await recruiter.$(".text-body-medium");
@@ -200,7 +211,7 @@ const fs = require('fs');
 
                 //FIRST JOB EXPERIENCE LISTED
                 try{
-                    recruiterExperience = await profilePage.evaluate(() => {
+                    let recruiterCurrJobData = await profilePage.evaluate(() => {
                     const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
                     let experienceSection = null;
                     for(const section of sections){
@@ -213,25 +224,34 @@ const fs = require('fs');
                     let experiences = experienceSection.querySelectorAll('li');
                     if(experiences.length == 0) return null;
 
-                    let title = experiences[0].querySelector('span')?.innerText;
-                    let firstJobCompany = experiences[0].querySelector('.t-14')?.innerText;
-                    let output = title + " at " + firstJobCompany;
-
-                    if(firstJobCompany.includes("Full-time · ") || firstJobCompany.includes("yrs") || firstJobCompany.includes("mos")){//check subheading
-                        firstJobCompany = experiences[0].querySelectorAll(".t-bold")[1]?.innerText;
-                        output = firstJobCompany + " at " + title;
-                        output = output.split("\n").pop();
-                    }else
-                        output = output.split("\n").shift();
+                    let x = experiences[0].querySelector('span')?.innerText;
+                    let y = experiences[0].querySelector('.t-14')?.innerText;
+                    let output = undefined;
+                    if(y.includes("Full-time · ") || y.includes("yrs") || y.includes("mos")){//check subheading
+                        y = experiences[0].querySelectorAll(".t-bold")[1]?.innerText;
+                        x = x.split(" · ").pop();
+                        y = y.split(" · ").pop();
+                        x = x.split("\n").shift();
+                        y = y.split("\n").shift();
+                        output = [y, x];
+                    }else{
+                        x = x.split(" · ").shift();
+                        y = y.split(" · ").shift();
+                        x = x.split("\n").shift();
+                        y = y.split("\n").shift();
+                        output = [x, y];
+                    }
                     return output || null;
                     });
+                    recruiterCurrentJobTitle = recruiterCurrJobData[0];
+                    recruiterCurrentJobCompany = recruiterCurrJobData[1];
                 }catch(error){console.log("Error in EXPERIENCE fetch: " + error);}
                 //FIRST JOB EXPERIENCE LISTED END
             }//END if !doNotAdd
             
             //ADD RECRUITER
             if(!doNotAdd){
-                recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, 
+                recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterProfilePicture,recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
                 recruiterTagline, status, searchQuery));
                 totalRecruiters++;
                 console.log("Recruiters: " + recruiterList.length);
@@ -253,15 +273,17 @@ const fs = require('fs');
 
 })();
 
-function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterExperience, 
+function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterProfilePicture, recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
     recruiterTagline, recruiterStatus, searchQuery){
    return {
     recruiter_name: recruiterName || '',
     recruiter_location: recruiterLocation || '',
     recruiter_linkedin: recruiterLinkedIn || '',
+    recruiter_profile_picture: recruiterProfilePicture || '',
     recruiter_about: recruiterAbout || '',
     recruiter_education: recruiterEducation || '',
-    recruiter_experience: recruiterExperience || '',
+    recruiter_current_job_title: recruiterCurrentJobTitle || '',
+    recruiter_current_job_company: recruiterCurrentJobCompany || '',
     recruiter_tagline: recruiterTagline || '',
     recruiter_status: recruiterStatus || '',
     search_query: searchQuery || ''
