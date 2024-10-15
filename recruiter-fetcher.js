@@ -83,94 +83,152 @@ const fs = require('fs');
         const recruiters = await page.$$('.list-style-none > .reusable-search__result-container');
         for(const recruiter of recruiters){
             let doNotAdd = false;
-            let name = "undefined";
-            let location = "undefined";
-            let status = "undefined";
-            let recruiterLinkedin = "undefined";
-            let recruiterAbout = "undefined";
-            let recruiterEducation = "undefined";
-            let recruiterExperience = "undefined";
-            let recruiterTagline = "undefined";
+            let name = undefined;
+            let location = undefined;
+            let status = undefined;
+            let recruiterLinkedin = undefined;
+            let recruiterAbout = undefined;
+            let recruiterEducation = undefined;
+            let recruiterExperience = undefined;
+            let recruiterTagline = undefined;
             let searchQuery = title;
+            //STATUS
             try{
-                let element = await recruiter.$(".entity-result__title-text > .app-aware-link > span > span");
-                let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);//remove most whitespace
-                recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
-
-                name = recruiterData[1].split("View").pop();
-                name = name.replace("’s profile", "");
-                name = name.replace("’ profile", "");
-                name = name.replace(" ", "");
-                location = recruiterData[5];
-                status = recruiterData[6];
-                recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
-                if(!recruiterLinkedin.includes("/in/") || name.includes("LinkedInMember"))
-                    doNotAdd = true;
-            }catch(error){}
-            try{
-                if(status.includes("Current") && (status.includes("Recruiter") || status.includes("recruiter") || status.includes("RECRUITER"))){//if they are CURRENTLY a recruiter
-                    await profilePage.goto(recruiterLinkedin);
-                    await profilePage.waitForSelector('.text-body-medium', { timeout: 10000 });
-                    //visit their page, grab education, update status with current first listed experience
-                    //TAGLINE & STATUS
-                    let element = await recruiter.$(".text-body-medium");
-                    let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
-                    recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
-                    recruiterTagline = recruiterData[4];
-                    recruiterStatus = recruiterData[6];
-                    await profilePage.waitForSelector('.UdDPsqOvTPDMZSLBZaNGGxyBXqSNkBQClL', { visible: true, timeout: 3000 });
-                }else
-                    doNotAdd = true;
-            }catch(error){}
-
-            //START ABOUT
-            //GETS ALL AS ARRAY
-            const profileSectionText = await profilePage.$$eval('.eMKzYTnovCkOQaNEgZiBMAzoRyZWLkSNRU', elements =>
-                elements.map(element => element.textContent.trim())
-            );
-            try{
-                await profilePage.waitForSelector('#about', { timeout: 100 });
-                recruiterAbout = profileSectionText[0];
-            }catch(error){}
-            //END ABOUT
-                    
-            //START EDUCATION
-            try{
-                await profilePage.waitForSelector('#education', { timeout: 100 });
-                recruiterEducation = await profilePage.$eval('div > div > main > section:nth-child(6) > div.odrLHmBmKxJsahsMEDxzTVuSNTHKhMndqJow > ul > li:nth-child(1) > div > div.display-flex.flex-column.align-self-center.full-width > div > a > div > div > div > div > span:nth-child(1)', el => el.textContent.trim());
-            }catch(error){}
-            //END EDUCATION
-
-            //FIRST JOB EXPERIENCE LISTED
-            try{
-                recruiterExperience = await profilePage.evaluate(() => {
-                const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
-                let experienceSection = null;
-                for(const section of sections){
-                    if(section.querySelector('div')?.id == "experience"){
-                        experienceSection = section;
-                    }
+                let curRecruiter = await recruiter.$(".entity-result__summary")
+                let statusTemp = await recruiter.evaluate(el => el.innerText.trim(), curRecruiter);
+                statusTemp = statusTemp.split("\n");
+                for(const item of statusTemp){
+                    if(item.includes("Current") && (item.includes("Recruiter") || item.includes("recruiter") || item.includes("RECRUITER")))
+                        status = item;
                 }
-                if(!experienceSection) return null;
+
+                if(!status)//if not a current recruiter
+                    doNotAdd = true;
+            }catch(error){console.log("Error in STATUS fetch: " + error);}
+            //END STATUS
+
+            //LINKEDIN LINK
+            try{
+                recruiterLinkedin = await recruiter.$$eval('.entity-result__title-text a', links => links.length > 0 ? links[0].href : null);
+
+                if(!recruiterLinkedin.includes("/in/"))
+                    doNotAdd = true;
+            }catch(error){console.log("Error in LINKEDIN LINK fetch: " + error);}
+            //END LINKEDIN LINK
+
+            if(!doNotAdd){//if "good" recruiter, visit their page and get more data - name, location, about, tagline, education, experience
+                await profilePage.goto(recruiterLinkedin);
+                await profilePage.waitForSelector('.text-body-medium', { timeout: 10000 });//wait for page load
+
+                //NAME
+                try{
+                    name = await profilePage.evaluate(() => {
+                        let nameLocContainers = document.querySelectorAll(".CJcpJShEPtvFSCHsalxWzNixdIdoEAqbWA");
+                        return nameLocContainers[0].querySelector('span').innerText.trim();//first span in second element
+                    });
+                }catch(error){console.log("Error in NAME fetch: " + error);}
+                //END NAME
+
+                //LOCATION
+                try{
+                    location = await profilePage.evaluate(() => {
+                        let nameLocContainers = document.querySelectorAll(".CJcpJShEPtvFSCHsalxWzNixdIdoEAqbWA");
+                        return nameLocContainers[1].querySelector('span').innerText.trim();//first span in second element
+                    });
+                }catch(error){console.log("Error in LOCATION fetch: " + error);}
+                //END LOCATION
+
+                //TAGLINE
+                let element = await recruiter.$(".text-body-medium");
+                let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
+                recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
+                recruiterTagline = recruiterData[4];
+                await profilePage.waitForSelector('.UdDPsqOvTPDMZSLBZaNGGxyBXqSNkBQClL', { visible: true, timeout: 3000 });
+                //END TAGLINE
+
+                //ABOUT
+                try{
+                    recruiterAbout = await profilePage.evaluate(() => {
+                    const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
+                    let aboutSection = null;
+                    for(const section of sections){
+                        if(section.querySelector('div')?.id == "about"){
+                            aboutSection = section;
+                        }
+                    }
+                    if(!aboutSection) return null;
                     
-                let experiences = experienceSection.querySelectorAll('li');
-                if(experiences.length == 0) return null;
+                    let output = aboutSection.querySelector('.QPriypoPxOFvmnjsoqRxkXeeNBXMwoasTM');
+                    
+                    return output.innerText.trim() || null;
+                    });
+                }catch(error){console.log("Error in ABOUT fetch: " + error);}
+                //END ABOUT
 
-                let title = experiences[0].querySelector('span')?.innerText;
-                let firstJobCompany = experiences[0].querySelector('.t-14')?.innerText;
-                let output = title + " at " + firstJobCompany;
+                //START EDUCATION
+                try{
+                    recruiterEducation = await profilePage.evaluate(() => {
+                    const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
+                    let educationSection = null;
+                    for(const section of sections){
+                        if(section.querySelector('div')?.id == "education"){
+                            educationSection = section;
+                        }
+                    }
+                    if(!educationSection) return null;
+                            
+                    let experiences = educationSection.querySelectorAll('li');
+                    if(experiences.length == 0) return null;
+        
+                    let title = experiences[0].querySelector('span')?.innerText;
+                    let degree = experiences[0].querySelector('.t-14')?.innerText;
+                    let output = undefined;
 
-                if(firstJobCompany.includes("Full-time · ") || firstJobCompany.includes("yrs") || firstJobCompany.includes("mos")){//check subheading
-                    firstJobCompany = experiences[0].querySelectorAll(".t-bold")[1]?.innerText;
-                    output = firstJobCompany + " at " + title;
+                    if(degree)
+                        output = degree + " at " + title;
+                    else
+                        output = title;
+
+                    if(degree.includes(" - 20") || degree.includes(" - 19")){//check subheading - if it is a year
+                        output = title;
+                    }
                     output = output.split("\n").pop();
-                }else
-                    output = output.split("\n").shift();
-                return output || null;
-            });
-            //recruiterExperience = recruiterExperience.split("\n").shift();
-            //FIRST JOB EXPERIENCE LISTED END
+                    return output || null;
+                    });
+                }catch(error){console.log("Error in EDUCATION fetch: " + error);}
+                //END EDUCATION
 
+                //FIRST JOB EXPERIENCE LISTED
+                try{
+                    recruiterExperience = await profilePage.evaluate(() => {
+                    const sections = document.querySelectorAll('section[data-view-name="profile-card"]');//grab all sections
+                    let experienceSection = null;
+                    for(const section of sections){
+                        if(section.querySelector('div')?.id == "experience"){
+                            experienceSection = section;
+                        }
+                    }
+                    if(!experienceSection) return null;
+                        
+                    let experiences = experienceSection.querySelectorAll('li');
+                    if(experiences.length == 0) return null;
+
+                    let title = experiences[0].querySelector('span')?.innerText;
+                    let firstJobCompany = experiences[0].querySelector('.t-14')?.innerText;
+                    let output = title + " at " + firstJobCompany;
+
+                    if(firstJobCompany.includes("Full-time · ") || firstJobCompany.includes("yrs") || firstJobCompany.includes("mos")){//check subheading
+                        firstJobCompany = experiences[0].querySelectorAll(".t-bold")[1]?.innerText;
+                        output = firstJobCompany + " at " + title;
+                        output = output.split("\n").pop();
+                    }else
+                        output = output.split("\n").shift();
+                    return output || null;
+                    });
+                }catch(error){console.log("Error in EXPERIENCE fetch: " + error);}
+                //FIRST JOB EXPERIENCE LISTED END
+            }//END if !doNotAdd
+            
             //ADD RECRUITER
             if(!doNotAdd){
                 recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterAbout, recruiterEducation, recruiterExperience, 
@@ -178,7 +236,6 @@ const fs = require('fs');
                 totalRecruiters++;
                 console.log("Recruiters: " + recruiterList.length);
             }
-            }catch(error){}
         }
         console.log("Done with " + title);
         recruiterList = removeDuplicateRecruiters(recruiterList);
