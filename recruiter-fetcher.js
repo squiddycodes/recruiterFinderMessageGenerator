@@ -87,6 +87,7 @@ const fs = require('fs');
             let location = undefined;
             let status = undefined;
             let recruiterLinkedin = undefined;
+            let recruiterEmail = undefined;
             let recruiterProfilePicture = undefined;
             let recruiterAbout = undefined;
             let recruiterEducation = undefined;
@@ -121,6 +122,10 @@ const fs = require('fs');
             if(!doNotAdd){//if "good" recruiter, visit their page and get more data - name, location, about, tagline, education, experience
                 await profilePage.goto(recruiterLinkedin);
                 await profilePage.waitForSelector('.text-body-medium', { timeout: 10000 });//wait for page load
+
+                //LINKEDIN LINK UPDATE
+                recruiterLinkedin = profilePage.url();
+                //END LINKEDIN LINK UPDATE
 
                 //NAME
                 try{
@@ -246,12 +251,31 @@ const fs = require('fs');
                     recruiterCurrentJobTitle = recruiterCurrJobData[0];
                     recruiterCurrentJobCompany = recruiterCurrJobData[1];
                 }catch(error){console.log("Error in EXPERIENCE fetch: " + error);}
-                //FIRST JOB EXPERIENCE LISTED END
+                //END FIRST JOB EXPERIENCE LISTED
+
+                //EMAIL
+                try{
+                    await profilePage.goto(recruiterLinkedin + "overlay/contact-info/");
+                    await profilePage.waitForSelector('.GbOUqgsXcLRctkckezmvfytZoHiNtpjNMicbM', { timeout: 10000 });//wait for page load
+                    recruiterEmail = await profilePage.evaluate(() => {
+                        let headings = document.querySelectorAll(".pv-contact-info__header");
+                        let emailHeading = undefined;
+                        for(const heading of headings){
+                            if(heading.innerText == "Email")
+                            emailHeading = heading;
+                        }
+                        if(!emailHeading)
+                            return null;
+                        return emailHeading.nextElementSibling.querySelector("a").href || null;
+                    });
+                }catch(error){console.log("Error in EMAIL fetch: " + error);}
+                //END EMAIL
+
             }//END if !doNotAdd
             
             //ADD RECRUITER
             if(!doNotAdd){
-                recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterProfilePicture,recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
+                recruiterList.push(convertToRecruiterObject(name, location, recruiterLinkedin, recruiterEmail,recruiterProfilePicture,recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
                 recruiterTagline, status, searchQuery));
                 totalRecruiters++;
                 console.log("Recruiters: " + recruiterList.length);
@@ -273,12 +297,13 @@ const fs = require('fs');
 
 })();
 
-function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterProfilePicture, recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
+function convertToRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterEmail ,recruiterProfilePicture, recruiterAbout, recruiterEducation, recruiterCurrentJobTitle, recruiterCurrentJobCompany,
     recruiterTagline, recruiterStatus, searchQuery){
    return {
     recruiter_name: recruiterName || '',
     recruiter_location: recruiterLocation || '',
     recruiter_linkedin: recruiterLinkedIn || '',
+    recruiter_email: recruiterEmail || '',
     recruiter_profile_picture: recruiterProfilePicture || '',
     recruiter_about: recruiterAbout || '',
     recruiter_education: recruiterEducation || '',
