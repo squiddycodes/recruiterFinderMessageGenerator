@@ -30,30 +30,33 @@ require("dotenv").config();
         if(recruiters[i].recruiter_about != ''){//IF THEY HAVE ABOUT SECTION
             //SUMMARIZE ABOUT SECTION + tagline
             let aboutSummarization = await newPrompt(openAIClient, "You are trying to make an impression on a recruiter. You can see their LinkedIn about section. Summarize in 1-2 sentences: What skills/qualifications are they looking for?\nABOUT:" + recruiters[i].recruiter_tagline + "--" + recruiters[i].recruiter_about);
-            //console.log(aboutSummarization + "\n");
+            console.log("\nAbout Summarization: " + aboutSummarization);
 
             //compare about summarization to resume - pick out an experience
             let comparisonToResume = await newPrompt(openAIClient, "Consider " + name[0] + " " + name[1] + "'s Resume:" + resume + "\n\n Pick something from their resume to connect to something SPECIFIC that the recruiter values." + aboutSummarization + " What is the best way to impress this recruiter, given my resume? Did we go to the same school? What experiences, projects, education or skills do I have that could help? Respond in one CONCISE sentence.");
-            //console.log(comparisonToResume + "\n\n");
+            console.log("Comparison to Resume: " + comparisonToResume);
 
             //given picked out experience and the about summarization, where the recruiter worked and studied; make a message
-            finalPrompt = "You are a job seeker planning to reach out to a job recruiter." + aboutSummarization + " They work as a " + recruiters[i].recruiter_current_job_title + " at " + recruiters[i].recruiter_current_job_company + ". They have education:" + recruiters[i].recruiter_education + ".\n Write a concise but genuine greeting to send over LinkedIn DM. Begin the message with \"Hi " + fullName[0] + ",\", and end it with \"Sincerely, " + name[0] + " " + name[1] + "\" or a similar sign off. The message should be concise but genuine and personal, express interest in something specific about the recruiter or company and relate it to your own strength. You are studying " + major + " at " + school + ", and are working at " + jobCompany + " as a " + jobTitle + ". Use this example, modify if needed: " + comparisonToResume;
+            finalPrompt = "You are a job seeker planning to reach out to a job recruiter." + aboutSummarization + " They work as a " + recruiters[i].recruiter_current_job_title + " at " + recruiters[i].recruiter_current_job_company + ". They have education:" + recruiters[i].recruiter_education + ".\n Write a concise but genuine greeting to send over LinkedIn DM. Begin the message with \"Hi " + fullName[0] + ",\" (no further intro), then express your interst in something specific about the recruiter or the company stands out to you as a job seeker interested in working at their company. End with asking to connect and to have a conversation with them about potential job opportunities. The message should be concise (300 CHARACTERS OR LESS) but genuine and personal, AND IN COMPLETE SENTENCES WITH CORRECT GRAMMAR. You are " + name[0] + " " + name[1] + "; studying " + major + " at " + school + ", and are working at " + jobCompany + " as a " + jobTitle + ". Use this example if needed as a means of impressing or connecting the recruiter, modify as needed: " + comparisonToResume;
 
-            console.log(await newPrompt(openAIClient, finalPrompt));
         }else{//IF NO ABOUT SECTION
             //use status, tagline, current job, education, location
-            let statusTagSummarization = await newPrompt(openAIClient, "You are trying to make an impression on a recruiter. You can see their status on Linkedin:" + recruiters[i].recruiter_status + " - " + recruiters[i].recruiter_tagline + ": Summarize in 1-2 sentences: What skills/qualifications are they looking for?");
+            let statusTagSummarization = await newPrompt(openAIClient, "You are trying to make an impression on a recruiter. You can see their status on Linkedin:" + recruiters[i].recruiter_status + " - " + recruiters[i].recruiter_tagline + ": Summarize in 1-2 sentences: What skills/qualifications do you predict that are they looking for, given the information you have?");
+            console.log("\nStatus and Tagline Summarization: " + statusTagSummarization);
 
             //compare about summarization to resume - pick out an experience
-            let comparisonToResume = await newPrompt(openAIClient, "Consider " + name[0] + " " + name[1] + "'s Resume:" + resume + "\n\n Pick something from their resume to connect to something SPECIFIC that the recruiter values." + aboutSummarization + " What is the best way to impress this recruiter, given my resume? Did we go to the same school? What experiences, projects, education or skills do I have that could help? Respond in one CONCISE sentence.");
-            //console.log(comparisonToResume + "\n\n");
+            let comparisonToResume = await newPrompt(openAIClient, "Consider " + name[0] + " " + name[1] + "'s Resume:" + resume + "\n\n Pick something from their resume to connect to something SPECIFIC that the recruiter values." + statusTagSummarization + " What is the best way to impress this recruiter, given my resume? Did we go to the same school? What experiences, projects, education or skills do I have that could help? Respond in one CONCISE sentence.");
+            console.log("Comparison to Resume: " + comparisonToResume);
 
             //given picked out experience and the about summarization, where the recruiter worked and studied; make a message
-            finalPrompt = "You are a job seeker planning to reach out to a job recruiter." + statusTagSummarization + " They work as a " + recruiters[i].recruiter_current_job_title + " at " + recruiters[i].recruiter_current_job_company + ". They have education:" + recruiters[i].recruiter_education + ".\n Write a concise but genuine greeting to send over LinkedIn DM. Begin the message with \"Hi " + fullName[0] + ",\", and end it with \"Sincerely, " + name[0] + " " + name[1] + "\" or a similar sign off. The message should be concise but genuine and personal, express interest in something specific about the recruiter or company and relate it to your own strength. You are studying " + major + " at " + school + ", and are working at " + jobCompany + " as a " + jobTitle + ". Use this example, modify if needed: " + comparisonToResume;
+            finalPrompt = "You are a job seeker planning to reach out to a job recruiter." + statusTagSummarization + " They work as a " + recruiters[i].recruiter_current_job_title + " at " + recruiters[i].recruiter_current_job_company + ". They have education:" + recruiters[i].recruiter_education + ".\n Write a concise but genuine greeting to send over LinkedIn DM. Begin the message with \"Hi " + fullName[0] + ",\" (no further intro), then express your interst in something specific about the recruiter or the company stands out to you as a job seeker interested in working at their company. End with asking to connect and to have a conversation with them about potential job opportunities. The message should be concise (300 CHARACTERS OR LESS) but genuine and personal, AND IN COMPLETE SENTENCES WITH CORRECT GRAMMAR. You are " + name[0] + " " + name[1] + "; studying " + major + " at " + school + ", and are working at " + jobCompany + " as a " + jobTitle + ". Use this example if needed as a means of impressing or connecting the recruiter, modify as needed: " + comparisonToResume;
         }
-        outputJSONS.push(convertToFinishedRecruiterObject(recruiters[i].recruiter_name, recruiters[i].recruiterLocation, recruiters[i].recruiter_linkedin, 
-        recruiters[i].recruiter_about, recruiters[i].recruiter_education, recruiters[i].recruiter_experience, recruiters[i].recruiter_tagline, 
-        recruiters[i].recruiter_status, recruiters[i].search_query, (await newPrompt(openAIClient, finalPrompt))));
+
+        let message = await newPrompt(openAIClient, finalPrompt);
+        console.log("Final Message: " + message);
+        outputJSONS.push(convertToFinishedRecruiterObject(recruiters[i].recruiter_name, recruiters[i].recruiter_location, recruiters[i].recruiter_linkedin, 
+        recruiters[i].recruiter_about, recruiters[i].recruiter_education, recruiters[i].recruiter_current_job_title, recruiters[i].recruiter_current_job_company, recruiters[i].recruiter_tagline, 
+        recruiters[i].recruiter_status, recruiters[i].search_query, message));
         console.log((i+1) + "/" + recruiters.length);//show progress
     }
     const jsonString = JSON.stringify(outputJSONS, null, 2);
@@ -80,7 +83,7 @@ async function newPrompt(client, input){
     return output.choices[0].message.content;
 }
 
-function convertToFinishedRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterExperience, 
+function convertToFinishedRecruiterObject(recruiterName, recruiterLocation, recruiterLinkedIn, recruiterAbout, recruiterEducation, recruiterJobTitle, recruiterJobCompany, 
     recruiterTagline, recruiterStatus, searchQuery, recruiterMessage){
    return {
     recruiter_name: recruiterName || '',
@@ -88,7 +91,8 @@ function convertToFinishedRecruiterObject(recruiterName, recruiterLocation, recr
     recruiter_linkedin: recruiterLinkedIn || '',
     recruiter_about: recruiterAbout || '',
     recruiter_education: recruiterEducation || '',
-    recruiter_experience: recruiterExperience || '',
+    recruiter_job_title: recruiterJobTitle || '',
+    recruiter_job_company: recruiterJobCompany || '',
     recruiter_tagline: recruiterTagline || '',
     recruiter_status: recruiterStatus || '',
     search_query: searchQuery || '',
