@@ -3,8 +3,8 @@ const fs = require('fs');
 
 (async () => {
     let recruiterList = [];
-    let maxPagesPerJobTitle = 20;
-    let scrapeSuccessThreshold = .50;//   scrape/skip ratio must beat to continue to next page
+    let maxPagesPerJobTitle = 50;
+    let scrapeSuccessThreshold = .10;//   scrape/skip ratio must beat to continue to next page - MORE THAN 1/10
     const jobTitles = [
         "Software Development",
         "Mobile App Development",
@@ -132,6 +132,7 @@ const fs = require('fs');
                 if(!doNotAdd){//if "good" recruiter, visit their page and get more data - name, location, about, tagline, education, experience
                     await profilePage.goto(recruiterLinkedin);
                     await profilePage.waitForSelector('.text-body-medium', { timeout: 10000 });//wait for page load
+                    await profilePage.waitForSelector('section[data-view-name="profile-card"]', { timeout: 10000});
     
                     //LINKEDIN LINK UPDATE
                     recruiterLinkedin = profilePage.url();
@@ -140,8 +141,8 @@ const fs = require('fs');
                     //NAME
                     try{
                         name = await profilePage.evaluate(() => {
-                            let nameLocContainers = document.querySelectorAll(".CJcpJShEPtvFSCHsalxWzNixdIdoEAqbWA");
-                            return nameLocContainers[0].querySelector('span').innerText.trim();//first span in second element
+                            let name = document.querySelector(".text-heading-xlarge");
+                            return name.innerText.trim();//first span in second element
                         });
                     }catch(error){console.log("Error in NAME fetch: " + error);}
                     //END NAME
@@ -149,8 +150,8 @@ const fs = require('fs');
                     //LOCATION
                     try{
                         location = await profilePage.evaluate(() => {
-                            let nameLocContainers = document.querySelectorAll(".CJcpJShEPtvFSCHsalxWzNixdIdoEAqbWA");
-                            return nameLocContainers[1].querySelector('span').innerText.trim();//first span in second element
+                            let profileCard = document.querySelector(".artdeco-card");
+                            return profileCard.querySelector(".text-body-small:nth-child(1)").innerText.trim();
                         });
                     }catch(error){console.log("Error in LOCATION fetch: " + error);}
                     //END LOCATION
@@ -165,11 +166,13 @@ const fs = require('fs');
                     }catch(error){console.log("Error in PROFILE PICTURE (PFP) fetch: " + error);}
     
                     //TAGLINE
-                    let element = await recruiter.$(".text-body-medium");
-                    let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
-                    recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
-                    recruiterTagline = recruiterData[4];
-                    await profilePage.waitForSelector('.UdDPsqOvTPDMZSLBZaNGGxyBXqSNkBQClL', { visible: true, timeout: 3000 });
+                    try{
+                        let element = await recruiter.$(".text-body-medium");
+                        let recruiterData = await recruiter.evaluate(el => el.textContent.trim().replaceAll("\n", "").replaceAll("\t", ""), element);
+                        recruiterData = recruiterData.split("  ").filter(str => /\w+/.test(str));//split and remove empty strings
+                        recruiterTagline = recruiterData[4];
+                        await profilePage.waitForSelector('.NsYyjEipajASCBqfhIwvzndqGAopw', { visible: true, timeout: 3000 });
+                    }catch(error){console.log("Error in TAGLINE fetch: " + error);}
                     //END TAGLINE
     
                     //ABOUT
@@ -182,13 +185,13 @@ const fs = require('fs');
                                 aboutSection = section;
                             }
                         }
-                        if(!aboutSection) return null;
-                        
-                        let output = aboutSection.querySelector('.QPriypoPxOFvmnjsoqRxkXeeNBXMwoasTM');
-                        if(!output)
+                        if(!aboutSection){
                             return null;
+                        }
+                        let output = aboutSection.querySelector('.ph5');
+                        if(!output) return null;
                         
-                        return output.innerText.trim() || null;
+                        return output.innerText.replaceAll("\n…see more", "").trim() || null;
                         });
                     }catch(error){console.log("Error in ABOUT fetch: " + error);}
                     //END ABOUT
