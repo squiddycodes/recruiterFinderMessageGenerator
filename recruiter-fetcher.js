@@ -5,6 +5,7 @@ const fs = require('fs');
     let recruiterList = [];
     let maxPagesPerJobTitle = 50;
     let scrapeSuccessThreshold = .10;//   scrape/skip ratio must beat to continue to next page - MORE THAN 1/10
+    let totalPages = 1;
     const jobTitles = [
         "Software Development",
         "Mobile App Development",
@@ -127,7 +128,7 @@ const fs = require('fs');
                     statusTemp = statusTemp.split("\n");
                     for(const item of statusTemp){
                         if(item.includes("Current") && (item.includes("Recruiter") || item.includes("recruiter") || item.includes("RECRUITER")))
-                            status = item;
+                            status = item.replaceAll("Current: ", "");
                     }
     
                     if(!status)//if not a current recruiter
@@ -311,7 +312,7 @@ const fs = require('fs');
                     numRecruitersAddedFromCurrPage++;
                 }
             }//END PAGE SCRAPE FOR RECRUITER IN RECRUITERS
-            console.log(numRecruitersAddedFromCurrPage + "/" + numRecruitersOnPage + " Recruiter/Non-Recruiter ratio - pages iterated:" + pagesScraped);
+            console.log(numRecruitersAddedFromCurrPage + "/" + numRecruitersOnPage + " Recruiter/Non-Recruiter ratio     Pages iterated:" + pagesScraped + "     Total Pages:" + totalPages);
             if(numRecruitersAddedFromCurrPage / numRecruitersOnPage >= scrapeSuccessThreshold && pagesScraped < maxPagesPerJobTitle){//go to next page if condition satisfied
                 goToNextPage = true;
                 pagesScraped++;
@@ -320,18 +321,28 @@ const fs = require('fs');
                 await new Promise(r => setTimeout(r, 1000));
                 await page.waitForSelector('.reusable-search__entity-result-list > .reusable-search__result-container', { timeout: 60000 });//wait for list to load
             }
+            totalPages++;
+            recruiterList = removeDuplicateRecruiters(recruiterList);
+            const jsonString = JSON.stringify(recruiterList, null, 2);
+            fs.writeFile('recruiters.json', jsonString, (err) => {
+            if (err) {
+                console.error('Error writing file:', err);
+            } else {
+                console.log('File successfully written!');
+            }
+            });
         }//END WHILE
         
         console.log("Done with " + title + "\n");
-        recruiterList = removeDuplicateRecruiters(recruiterList);
-        const jsonString = JSON.stringify(recruiterList, null, 2);
-        fs.writeFile('recruiters.json', jsonString, (err) => {
-        if (err) {
-            console.error('Error writing file:', err);
-        } else {
-            console.log('File successfully written!');
-        }
-        });
+        // recruiterList = removeDuplicateRecruiters(recruiterList);
+        // const jsonString = JSON.stringify(recruiterList, null, 2);
+        // fs.writeFile('recruiters.json', jsonString, (err) => {
+        // if (err) {
+        //     console.error('Error writing file:', err);
+        // } else {
+        //     console.log('File successfully written!');
+        // }
+        // });
     }
 
     console.log("DONE WITH ALL JOBS");
@@ -366,6 +377,6 @@ function removeDuplicateRecruiters(recruiters) {
             filteredRecruiters.push(recruiter);
         }
     }
-
+    console.log("Recruiters removed:" + (recruiters.length - filteredRecruiters.length));
     return filteredRecruiters;
 }
