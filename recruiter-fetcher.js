@@ -65,7 +65,22 @@ const fs = require('fs');
     ]
 
     //OPEN BROWSER
-    const browser = await puppeteer.launch({ headless: false, defaultViewport: false, userDataDir: "./tmp"});//launch browser
+    const BROWSER_DEVICE_INFO = {
+        "executablePath": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+        "userDataDir": "C:/Users/dguid/AppData/Local/Google/Chrome/User Data",//CHANGE IF NOT ME ------------------------------------
+        "ignoreDefaultArgs": ["--disable-extensions"],
+        "args": [
+        "--no-sandbox", 
+        "--disable-infobars", 
+        "--disable-setuid-sandbox"]
+    }
+
+    const browser = await puppeteer.launch({
+        headless: false,
+        ...BROWSER_DEVICE_INFO,
+    });
+
+    //const browser = await puppeteer.launch({ headless: false, defaultViewport: false, userDataDir: "./tmp"});//launch browser
     const profilePage = await browser.newPage();
     const page = await browser.newPage();//new page/tab in browser
     page.setViewport({width: 1920, height: 1080});
